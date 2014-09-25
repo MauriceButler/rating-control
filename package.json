@@ -19,5 +19,14 @@
   "dependencies": {
     "crel": "^2.1.5",
     "default-style": "^1.0.3"
-  }
+  },
+  "keywords": [
+    "rating",
+    "rateing",
+    "stars",
+    "star",
+    "5 star",
+    "control",
+    "rating-control"
+  ]
 }

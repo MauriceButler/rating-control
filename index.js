@@ -1,27 +1,30 @@
 var crel = require('crel'),
     DefaultStyle = require('default-style'),
     EventEmitter = require('events').EventEmitter,
-    style = new DefaultStyle('.rating.empty .item {color: gray;} .rating .item {font-size: 1.5em; color: gold;} .rating .item:after {content: "\\2605";} .rating .item.selected ~ .item { color: gray; }');
+    style = new DefaultStyle('.rating.empty .item {color: gray;} .rating .item {font-size: 1.5em; color: gold;} .rating .item:after {content: "\\2605";} .rating .item.selected ~ .item { color: gray; }'),
+    matches;
 
 function closest(target, query){
-    while(
-        target &&
-        target.ownerDocument &&
-        !(
-            target.matches ||
+    if(!matches){
+        matches = target.matches ||
             target.matchesSelector ||
             target.webkitMatchesSelector ||
             target.mozMatchesSelector ||
             target.msMatchesSelector ||
             function(){
-                throw "This browser does not support Element.matches()";
-            }
-        )(query)
+                throw 'This browser does not support Element.matches()';
+            };
+    }
+
+    while(
+        target &&
+        target.ownerDocument &&
+        !matches.call(target, query)
     ){
         target = target.parentNode;
     }
 
-    return target.matches(query) ? target : null;
+    return matches.call(target, query) ? target : null;
 }
 
 function Rating(options) {
@@ -33,6 +36,7 @@ function Rating(options) {
     }
 
     this.element = options.element;
+    this.itemsElement = options.itemsElement;
     this.itemTemplate = options.itemTemplate;
 
     if(options.items != null){
@@ -83,21 +87,6 @@ Rating.prototype.value = function(value){
     return this._selectedIndex(index);
 };
 
-Rating.prototype._currentIndex = -1;
-Rating.prototype._selectedIndex = function(value){
-    if(!arguments.length){
-        return this._currentIndex;
-    }
-
-    if(value === this._currentIndex){
-        return this;
-    }
-
-    this._currentIndex = value;
-    this._update();
-    return this;
-};
-
 Rating.prototype.items = function(value){
     if(!arguments.length){
         return this._items.slice();
@@ -112,6 +101,22 @@ Rating.prototype.items = function(value){
     this._renderItems();
     this._update();
     this.emit('items', value);
+    return this;
+};
+
+
+Rating.prototype._currentIndex = -1;
+Rating.prototype._selectedIndex = function(value){
+    if(!arguments.length){
+        return this._currentIndex;
+    }
+
+    if(value === this._currentIndex){
+        return this;
+    }
+
+    this._currentIndex = value;
+    this._update();
     return this;
 };
 
@@ -216,7 +221,11 @@ Rating.prototype._setHasValue = function() {
 
 Rating.prototype._render = function() {
     if(!this.element){
-        this.element = this.itemsElement = crel('span', {class: 'rating'});
+        this.element = crel('span', {class: 'rating'});
+    }
+
+    if(!this.itemsElement){
+        this.itemsElement = this.element;
     }
 
     this._setAsEmpty();

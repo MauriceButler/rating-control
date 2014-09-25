@@ -1,231 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var crel = require('crel'),
-    DefaultStyle = require('default-style'),
-    EventEmitter = require('events').EventEmitter,
-    style = new DefaultStyle('.rating.empty .item {color: gray;} .rating .item {font-size: 1.5em; color: gold;} .rating .item:after {content: "\\2605";} .rating .item.selected ~ .item { color: gray; }');
-
-function closest(target, query){
-    while(
-        target &&
-        target.ownerDocument &&
-        !target.matches(query)
-    ){
-        target = target.parentNode;
-    }
-
-    return target.matches(query) ? target : null;
-}
-
-function Rating(options) {
-    this._items = [1, 2, 3, 4, 5];
-    this._renderedItems = [];
-
-    if(!options){
-        options = {};
-    }
-
-    this.element = options.element;
-    this.itemTemplate = options.itemTemplate;
-
-    if(options.items != null){
-        this._items = options.items;
-    }
-
-    if(options.value != null){
-        this._currentIndex = this._items.indexOf(options.value);
-    }
-
-    if (options.removeDefaultStyle === true) {
-        style.remove();
-    }
-
-    this._render();
-
-    if(options.enabled != null){
-        this.enabled(options.enabled);
-    }
-}
-
-
-Rating.prototype = Object.create(EventEmitter.prototype);
-Rating.prototype.constructor = Rating;
-
-Rating.prototype._enabled = true;
-Rating.prototype.enabled = function(value){
-    if(!arguments.length){
-        return this._enabled;
-    }
-
-    this._enabled = value;
-    return this;
-};
-
-Rating.prototype._value = null;
-Rating.prototype.value = function(value){
-    if(!arguments.length){
-        return this._value;
-    }
-
-    var index = this._items.indexOf(value);
-
-    if((value !== null && index === -1) || index === this._currentIndex){
-        return this;
-    }
-
-    return this._selectedIndex(index);
-};
-
-Rating.prototype._currentIndex = -1;
-Rating.prototype._selectedIndex = function(value){
-    if(!arguments.length){
-        return this._currentIndex;
-    }
-
-    if(value === this._currentIndex){
-        return this;
-    }
-
-    this._currentIndex = value;
-    this._update();
-    return this;
-};
-
-Rating.prototype.items = function(value){
-    if(!arguments.length){
-        return this._items.slice();
-    }
-
-    if(!Array.isArray(value)){
-        throw 'items must be an array';
-    }
-
-    this._removeRenderedItems();
-    this._items = value.slice();
-    this._renderItems();
-    this._update();
-    this.emit('items', value);
-    return this;
-};
-
-Rating.prototype._disableRenderedElement = function() {
-    this.itemsElement.setAttribute('disabled', 'disabled');
-};
-
-Rating.prototype._enableRenderedElement = function() {
-    this.itemsElement.removeAttribute('disabled');
-};
-
-Rating.prototype._update = function() {
-    this._value = this._items[this._currentIndex];
-
-    if(this._enabled){
-        this._enableRenderedElement();
-    } else {
-        this._disableRenderedElement();
-    }
-
-    if(this._selectedElement){
-        this._selectedElement.classList.remove('selected');
-    }
-
-    if(this._currentIndex === -1){
-        this._setAsEmpty();
-    } else {
-        this._setHasValue();
-    }
-
-    this._selectedElement = this._renderedItems[this._currentIndex];
-
-    if(this._selectedElement){
-        this._selectedElement.classList.add('selected');
-    }
-
-    this.emit('value', this._value);
-};
-
-Rating.prototype._appendRenderedItem = function(item) {
-    crel(this.itemsElement, item);
-};
-
-Rating.prototype._removeRenderedItems = function() {
-    while(this._renderedItems.length){
-        this._removeRenderedItem(this._renderedItems.pop());
-    }
-};
-
-Rating.prototype._removeRenderedItem = function(item) {
-    this.itemsElement.removeChild(item);
-};
-
-Rating.prototype._renderItem = function() {
-    return this.itemTemplate.cloneNode(true);
-};
-
-Rating.prototype._renderItems = function() {
-    var items = this.items();
-
-    for (var i = 0; i < items.length; i++) {
-        var item = this._renderItem(i);
-        this._appendRenderedItem(item);
-        this._renderedItems.push(item);
-    }
-};
-
-Rating.prototype._click = function(event){
-    if(!this._enabled){
-        return;
-    }
-
-    var item = closest(event.target, '.rating .item');
-
-    if(item){
-        this._selectedIndex(this._renderedItems.indexOf(item));
-    }
-};
-
-Rating.prototype._bindEvents = function() {
-    this._clickHandeler = this._click.bind(this);
-
-    this.itemsElement.addEventListener('click', this._clickHandeler);
-};
-
-Rating.prototype._debind = function() {
-    this.itemsElement.removeEventListener('click', this._clickHandeler);
-};
-
-Rating.prototype.destroy = function(){
-    this._debind();
-    this.emit('destroy');
-};
-
-Rating.prototype._setAsEmpty = function() {
-    this.itemsElement.classList.add('empty');
-};
-
-Rating.prototype._setHasValue = function() {
-    this.itemsElement.classList.remove('empty');
-};
-
-Rating.prototype._render = function() {
-    if(!this.element){
-        this.element = this.itemsElement = crel('span', {class: 'rating'});
-    }
-
-    this._setAsEmpty();
-
-    if(!this.itemTemplate){
-        this.itemTemplate = crel('span', {class: 'item', });
-    }
-
-    this._renderItems();
-
-    this._bindEvents();
-
-    this._update();
-};
-
-module.exports = Rating;
-},{"crel":2,"default-style":3,"events":5}],2:[function(require,module,exports){
 //Copyright (C) 2012 Kory Nunn
 
 //Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -368,7 +141,305 @@ module.exports = Rating;
     return crel;
 }));
 
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
+var Rating = require('rating-control'),
+    crel = require('crel');
+
+function setupLog(control){
+    control.on('value', function(){
+        console.log(arguments);
+    });
+}
+
+
+
+
+var rating = new Rating();
+window.document.body.appendChild(rating.element);
+setupLog(rating);
+
+
+
+
+var rating2 = new Rating({
+    value:'apple',
+    items: ['banana', 'apple', 'orange'],
+    itemTemplate: crel('div', {class: 'item'}, crel('div'), crel('div')),
+    element: crel('div', {class: 'rating foo'})
+});
+
+window.document.body.appendChild(rating2.element);
+setupLog(rating2);
+
+
+
+var rating3Template = crel('div', {class: 'item'}, crel('div'), crel('div')),
+    rating3ItemsElement,
+    rating3Element = crel('div', {class: 'rating bar'},
+        crel('section',
+            rating3ItemsElement = crel('div')
+        )
+    );
+
+window.document.body.appendChild(rating3Element);
+
+var rating3 = new Rating({
+    value:'apple',
+    items: ['banana', 'apple', 'orange'],
+    itemTemplate: rating3Template,
+    itemsElement: rating3ItemsElement,
+    element: rating3Element
+});
+
+setupLog(rating3);
+},{"crel":1,"rating-control":3}],3:[function(require,module,exports){
+var crel = require('crel'),
+    DefaultStyle = require('default-style'),
+    EventEmitter = require('events').EventEmitter,
+    style = new DefaultStyle('.rating.empty .item {color: gray;} .rating .item {font-size: 1.5em; color: gold;} .rating .item:after {content: "\\2605";} .rating .item.selected ~ .item { color: gray; }'),
+    matches;
+
+function closest(target, query){
+    if(!matches){
+        matches = target.matches ||
+            target.matchesSelector ||
+            target.webkitMatchesSelector ||
+            target.mozMatchesSelector ||
+            target.msMatchesSelector ||
+            function(){
+                throw 'This browser does not support Element.matches()';
+            };
+    }
+
+    while(
+        target &&
+        target.ownerDocument &&
+        !matches.call(target, query)
+    ){
+        target = target.parentNode;
+    }
+
+    return matches.call(target, query) ? target : null;
+}
+
+function Rating(options) {
+    this._items = [1, 2, 3, 4, 5];
+    this._renderedItems = [];
+
+    if(!options){
+        options = {};
+    }
+
+    this.element = options.element;
+    this.itemsElement = options.itemsElement;
+    this.itemTemplate = options.itemTemplate;
+
+    if(options.items != null){
+        this._items = options.items;
+    }
+
+    if(options.value != null){
+        this._currentIndex = this._items.indexOf(options.value);
+    }
+
+    if (options.removeDefaultStyle === true) {
+        style.remove();
+    }
+
+    this._render();
+
+    if(options.enabled != null){
+        this.enabled(options.enabled);
+    }
+}
+
+
+Rating.prototype = Object.create(EventEmitter.prototype);
+Rating.prototype.constructor = Rating;
+
+Rating.prototype._enabled = true;
+Rating.prototype.enabled = function(value){
+    if(!arguments.length){
+        return this._enabled;
+    }
+
+    this._enabled = value;
+    return this;
+};
+
+Rating.prototype._value = null;
+Rating.prototype.value = function(value){
+    if(!arguments.length){
+        return this._value;
+    }
+
+    var index = this._items.indexOf(value);
+
+    if((value !== null && index === -1) || index === this._currentIndex){
+        return this;
+    }
+
+    return this._selectedIndex(index);
+};
+
+Rating.prototype.items = function(value){
+    if(!arguments.length){
+        return this._items.slice();
+    }
+
+    if(!Array.isArray(value)){
+        throw 'items must be an array';
+    }
+
+    this._removeRenderedItems();
+    this._items = value.slice();
+    this._renderItems();
+    this._update();
+    this.emit('items', value);
+    return this;
+};
+
+
+Rating.prototype._currentIndex = -1;
+Rating.prototype._selectedIndex = function(value){
+    if(!arguments.length){
+        return this._currentIndex;
+    }
+
+    if(value === this._currentIndex){
+        return this;
+    }
+
+    this._currentIndex = value;
+    this._update();
+    return this;
+};
+
+Rating.prototype._disableRenderedElement = function() {
+    this.itemsElement.setAttribute('disabled', 'disabled');
+};
+
+Rating.prototype._enableRenderedElement = function() {
+    this.itemsElement.removeAttribute('disabled');
+};
+
+Rating.prototype._update = function() {
+    this._value = this._items[this._currentIndex];
+
+    if(this._enabled){
+        this._enableRenderedElement();
+    } else {
+        this._disableRenderedElement();
+    }
+
+    if(this._selectedElement){
+        this._selectedElement.classList.remove('selected');
+    }
+
+    if(this._currentIndex === -1){
+        this._setAsEmpty();
+    } else {
+        this._setHasValue();
+    }
+
+    this._selectedElement = this._renderedItems[this._currentIndex];
+
+    if(this._selectedElement){
+        this._selectedElement.classList.add('selected');
+    }
+
+    this.emit('value', this._value);
+};
+
+Rating.prototype._appendRenderedItem = function(item) {
+    crel(this.itemsElement, item);
+};
+
+Rating.prototype._removeRenderedItems = function() {
+    while(this._renderedItems.length){
+        this._removeRenderedItem(this._renderedItems.pop());
+    }
+};
+
+Rating.prototype._removeRenderedItem = function(item) {
+    this.itemsElement.removeChild(item);
+};
+
+Rating.prototype._renderItem = function() {
+    return this.itemTemplate.cloneNode(true);
+};
+
+Rating.prototype._renderItems = function() {
+    var items = this.items();
+
+    for (var i = 0; i < items.length; i++) {
+        var item = this._renderItem(i);
+        this._appendRenderedItem(item);
+        this._renderedItems.push(item);
+    }
+};
+
+Rating.prototype._click = function(event){
+    if(!this._enabled){
+        return;
+    }
+
+    var item = closest(event.target, '.rating .item');
+
+    if(item){
+        this._selectedIndex(this._renderedItems.indexOf(item));
+    }
+};
+
+Rating.prototype._bindEvents = function() {
+    this._clickHandeler = this._click.bind(this);
+
+    this.itemsElement.addEventListener('click', this._clickHandeler);
+};
+
+Rating.prototype._debind = function() {
+    this.itemsElement.removeEventListener('click', this._clickHandeler);
+};
+
+Rating.prototype.destroy = function(){
+    this._debind();
+    this.emit('destroy');
+};
+
+Rating.prototype._setAsEmpty = function() {
+    this.itemsElement.classList.add('empty');
+};
+
+Rating.prototype._setHasValue = function() {
+    this.itemsElement.classList.remove('empty');
+};
+
+Rating.prototype._render = function() {
+    if(!this.element){
+        this.element = crel('span', {class: 'rating'});
+    }
+
+    if(!this.itemsElement){
+        this.itemsElement = this.element;
+    }
+
+    this._setAsEmpty();
+
+    if(!this.itemTemplate){
+        this.itemTemplate = crel('span', {class: 'item', });
+    }
+
+    this._renderItems();
+
+    this._bindEvents();
+
+    this._update();
+};
+
+module.exports = Rating;
+},{"crel":4,"default-style":5,"events":6}],4:[function(require,module,exports){
+module.exports=require(1)
+},{}],5:[function(require,module,exports){
 var defaultStyles,
     validEnvironment;
 
@@ -437,16 +508,7 @@ DefaultStyle.prototype.css = function(cssText){
 };
 
 module.exports = DefaultStyle;
-},{}],4:[function(require,module,exports){
-var Rating = require('../'),
-    rating = new Rating({readOnly: true, value: 3});
-
-window.rating = rating;
-
-window.document.body.appendChild(rating.element);
-
-
-},{"../":1}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -751,4 +813,4 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}]},{},[4])
+},{}]},{},[2])
