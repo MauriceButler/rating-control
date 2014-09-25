@@ -1,0 +1,23 @@
+{
+  "name": "rating-control",
+  "version": "0.0.0",
+  "description": "Simple rating control",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ./tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MauriceButler/rating-control.git"
+  },
+  "author": "Maurice Butler <maurice.butler@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MauriceButler/rating-control/issues"
+  },
+  "homepage": "https://github.com/MauriceButler/rating-control",
+  "dependencies": {
+    "crel": "^2.1.5",
+    "default-style": "^1.0.3"
+  }
+}

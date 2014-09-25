@@ -1,4 +1,3 @@
-rating-control
-==============
+# rating-control
 
 Simple rating control
