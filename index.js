@@ -14,7 +14,7 @@ function closest(target, query){
             target.mozMatchesSelector ||
             target.msMatchesSelector ||
             function(){
-                throw "This browser does not support Element.matches()"
+                throw "This browser does not support Element.matches()";
             }
         )(query)
     ){
