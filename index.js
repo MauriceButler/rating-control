@@ -7,7 +7,16 @@ function closest(target, query){
     while(
         target &&
         target.ownerDocument &&
-        !target.matches(query)
+        !(
+            target.matches ||
+            target.matchesSelector ||
+            target.webkitMatchesSelector ||
+            target.mozMatchesSelector ||
+            target.msMatchesSelector ||
+            function(){
+                throw "This browser does not support Element.matches()";
+            }
+        )(query)
     ){
         target = target.parentNode;
     }
