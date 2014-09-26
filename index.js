@@ -24,7 +24,7 @@ function closest(target, query){
         target = target.parentNode;
     }
 
-    return matches.call(target, query) ? target : null;
+    return (target !== window.document && matches.call(target, query)) ? target : null;
 }
 
 function Rating(options) {
